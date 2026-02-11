@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+# Add your ML libs here:
+# torch
+# transformers
+# openai-whisper

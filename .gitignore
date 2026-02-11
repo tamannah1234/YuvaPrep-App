@@ -15,6 +15,7 @@ __pycache__/
 *.pyd
 # Python Virtual Environment
 **/.venv/
+**/venv/
 ############################
 # Node
 ############################
