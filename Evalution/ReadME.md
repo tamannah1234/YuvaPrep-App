@@ -131,4 +131,7 @@ def evaluate_response(audio: UploadFile):
 
 
 *To run ml_service *  .\venv\Scripts\activate 
-*To run server*    uvicorn app:app --reload --port 8000   
+*To run server*    uvicorn app:app --reload --port 8000  
+*To run QuestionGeneration *  .\.venv\Scripts\Activate.ps1
+*To run server*    uvicorn app.main:app --reload
+

@@ -73,8 +73,8 @@ export default function InterviewPage() {
 ${evalRes.data.ideal_answer}
 
 Feedback →
-Score: ${evalRes.data.scores.final_score}%
-Keywords: ${evalRes.data.scores.keyword_coverage}%
+Score: ${evalRes.data.scores.final_score}
+Keywords: ${evalRes.data.scores.keyword_coverage}
 Comment: ${evalRes.data.feedback}`,
       });
     } catch (err) {
@@ -160,7 +160,7 @@ Comment: ${evalRes.data.feedback}`,
 ${evalRes.data.ideal_answer}
 
 Feedback →
-Score: ${evalRes.data.scores.final_score}%
+Score: ${evalRes.data.scores.final_score}/10
 Comment: ${evalRes.data.feedback}`,
           });
 
