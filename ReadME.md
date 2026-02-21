@@ -23,9 +23,13 @@ The project is divided into three main components:
 
 YUVA-PREP
 │
+
 ├── client/ # React Frontend
+
 ├── server/ # Node.js Backend
+
 ├── evaluation/ # Python AI / ML Service
+
 └── ml_service/ # FastAPI, NLP models & scoring logic
 
 
