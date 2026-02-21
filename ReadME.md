@@ -9,17 +9,16 @@ It provides end-to-end interview practice — from question generation to answer
 
 1. [Overview](#overview)  
 2. [Features](#features)  
-3. [Tech Stack](#tech-stack)  
-4. [Architecture](#architecture)  
-5. [Module Details](#module-details)  
+3. [Tech Stack](#tech-stack)   
+4. [Module Details](#module-details)  
    - [Frontend](#frontend)  
    - [Backend](#backend)  
    - [Question Generation Service](#question-generation-service)  
    - [Evaluation / ML Service](#evaluation--ml-service)  
-6. [Scoring Logic](#scoring-logic)  
-7. [API Endpoints](#api-endpoints)  
-8. [Setup & Run](#setup--run)  
-9. [Future Work](#future-work)
+5. [Scoring Logic](#scoring-logic)  
+6. [API Endpoints](#api-endpoints)  
+7. [Setup & Run](#setup--run)  
+8. [Future Work](#future-work)
 
 ---
 
@@ -61,59 +60,6 @@ The project integrates React frontend, Node.js backend, MySQL database, and Pyth
 | NLP Models | HuggingFace Transformers, SentenceTransformers |
 | Speech Transcription | Whisper |
 
----
-
-## 🏗️ Architecture
-
-┌──────────────┐
-│    User      │
-│ (Web Browser)│
-└───────┬──────┘
-        │
-        │  UI Interaction (Login, Answer Submission)
-        ▼
-┌──────────────────────────┐
-│   React Frontend         │
-│   (client/)              │
-│   • Auth (Firebase)      │
-│   • Interview UI         │
-│   • Dashboard            │
-└───────┬──────────────────┘
-        │
-        │  REST APIs (JSON)
-        ▼
-┌──────────────────────────┐
-│   Node.js Backend        │
-│   (server/)              │
-│   • Auth Verification    │
-│   • Session Management   │
-│   • MySQL Integration    │
-│   • API Orchestration    │
-└───────┬──────────────────┘
-        │
-        │  Inter-service Communication
-        │
-        ├──────────────►  Question Generation Service
-        │                 (FastAPI + Transformers)
-        │                 • Role-based questions
-        │                 • Reference answers
-        │
-        ├──────────────►  Evaluation / ML Service
-        │                 (FastAPI + NLP Models)
-        │                 • Answer scoring (0–10)
-        │                 • Semantic similarity
-        │                 • Audio transcription
-        │
-        ▼
-┌──────────────────────────┐
-│   MySQL Database         │
-│                          │
-│   • Users                │
-│   • Interview Sessions   │
-│   • Questions            │
-│   • Answers              │
-│   • Scores & Feedback    │
-└──────────────────────────┘
 ---
 
 ## 📂 Module Details
