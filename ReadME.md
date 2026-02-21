@@ -65,21 +65,55 @@ The project integrates React frontend, Node.js backend, MySQL database, and Pyth
 
 ## 🏗️ Architecture
 
-
-user
-↓ (UI)
-React Frontend (client/)
-↓ (API calls)
-Node.js Backend (server/)
-↓
-
-QuestionGeneration Service — FastAPI Python
-
-Evaluation / ML Service — FastAPI Python
-↓
-MySQL Database (sessions, users, questions, scores)
-
-
+┌──────────────┐
+│    User      │
+│ (Web Browser)│
+└───────┬──────┘
+        │
+        │  UI Interaction (Login, Answer Submission)
+        ▼
+┌──────────────────────────┐
+│   React Frontend         │
+│   (client/)              │
+│   • Auth (Firebase)      │
+│   • Interview UI         │
+│   • Dashboard            │
+└───────┬──────────────────┘
+        │
+        │  REST APIs (JSON)
+        ▼
+┌──────────────────────────┐
+│   Node.js Backend        │
+│   (server/)              │
+│   • Auth Verification    │
+│   • Session Management   │
+│   • MySQL Integration    │
+│   • API Orchestration    │
+└───────┬──────────────────┘
+        │
+        │  Inter-service Communication
+        │
+        ├──────────────►  Question Generation Service
+        │                 (FastAPI + Transformers)
+        │                 • Role-based questions
+        │                 • Reference answers
+        │
+        ├──────────────►  Evaluation / ML Service
+        │                 (FastAPI + NLP Models)
+        │                 • Answer scoring (0–10)
+        │                 • Semantic similarity
+        │                 • Audio transcription
+        │
+        ▼
+┌──────────────────────────┐
+│   MySQL Database         │
+│                          │
+│   • Users                │
+│   • Interview Sessions   │
+│   • Questions            │
+│   • Answers              │
+│   • Scores & Feedback    │
+└──────────────────────────┘
 ---
 
 ## 📂 Module Details
