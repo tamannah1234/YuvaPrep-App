@@ -1,230 +1,294 @@
 # 🚀 YuvaPrep-App
 
-**YuvaPrep** is an AI-powered interview preparation platform that helps learners practice, evaluate, and improve their interview responses. The platform uses NLP and transformer-based models to generate interview questions, evaluate answers, provide explainable feedback, and track performance over time — all on a **0–10 scoring scale**.
+**YuvaPrep** is an AI-driven interview preparation platform that helps learners practice, evaluate, and improve their interview responses using modern NLP and transformer models.  
+It provides end-to-end interview practice — from question generation to answer scoring and feedback — all on a **0–10 point scale**.
 
 ---
 
-## 📌 Key Features
+## 📌 Table of Contents
 
-- 🔹 Role-based interview question generation  
-- 🔹 AI-driven answer evaluation  
-- 🔹 Scoring on a 0–10 scale based on semantic similarity, keyword coverage, and sentiment  
-- 🔹 Personalized feedback using summarization models  
-- 🔹 Session-level performance analysis  
-- 🔹 Audio transcription & speech metrics  
-- 🔹 Modular, scalable microservices architecture  
-
----
-
-## 🧠 Technical Overview
-
-The project is divided into three main components:
-
-
-YUVA-PREP
-│
-
-├── client/ # React Frontend
-
-├── server/ # Node.js Backend
-
-├── evaluation/ # Python AI / ML Service
-
-└── ml_service/ # FastAPI, NLP models & scoring logic
-
+1. [Overview](#overview)  
+2. [Features](#features)  
+3. [Tech Stack](#tech-stack)  
+4. [Architecture](#architecture)  
+5. [Module Details](#module-details)  
+   - [Frontend](#frontend)  
+   - [Backend](#backend)  
+   - [Question Generation Service](#question-generation-service)  
+   - [Evaluation / ML Service](#evaluation--ml-service)  
+6. [Scoring Logic](#scoring-logic)  
+7. [API Endpoints](#api-endpoints)  
+8. [Setup & Run](#setup--run)  
+9. [Future Work](#future-work)
 
 ---
 
-## 🛠️ Tech Stack
+## 📝 Overview
+
+YuvaPrep enables users to:
+- Generate interview questions for specific roles
+- Submit answers (text/audio)
+- Get automated evaluation with scores (0–10)
+- Receive detailed feedback
+- Track performance session-wise
+
+The project integrates React frontend, Node.js backend, MySQL database, and Python FastAPI microservices for AI logic.
+
+---
+
+## ✨ Features
+
+✔ Role-based interview question generation  
+✔ Transformer-based answer evaluation  
+✔ Semantic similarity & keyword scoring  
+✔ Sentiment-aware evaluation  
+✔ Audio transcription & speech metrics  
+✔ Session feedback summaries  
+✔ Firebase Google Auth  
+✔ Node.js + MySQL backend  
+✔ React + Tailwind frontend
+
+---
+
+## 🧠 Tech Stack
 
 | Layer | Technology |
 |-------|------------|
 | Frontend | React, Tailwind CSS, Firebase Auth |
-| Backend | Node.js, Express, MySQL |
-| ML Service | Python, FastAPI, HuggingFace, SentenceTransformers |
-| Authentication | Firebase (Google OAuth) |
-| Deployment | Vercel, Render / Railway / AWS |
+| Backend | Node.js, Express |
+| Database | MySQL |
+| AI / ML Services | Python, FastAPI |
+| NLP Models | HuggingFace Transformers, SentenceTransformers |
+| Speech Transcription | Whisper |
 
 ---
 
-## 🧠 Model & Evaluation Logic
+## 🏗️ Architecture
 
-### **1. Question Generation (FastAPI)**
-- Based on transformer model `flan-t5-small`
-- Generates role-based interview questions
-- Uses MySQL fixed dataset with fallback model generation
 
-### **2. Answer Evaluation Scoring**
-Hybrid model using:
+user
+↓ (UI)
+React Frontend (client/)
+↓ (API calls)
+Node.js Backend (server/)
+↓
+
+QuestionGeneration Service — FastAPI Python
+
+Evaluation / ML Service — FastAPI Python
+↓
+MySQL Database (sessions, users, questions, scores)
+
+
+---
+
+## 📂 Module Details
+
+---
+
+### ⛳ Frontend  
+Location: `client/`
+
+React application with:
+- Login
+- Candidate dashboard
+- Question attempt interface
+- Score & feedback UI
+- Protected routes (Firebase Auth)
+
+---
+
+### 🔐 Backend  
+Location: `server/`
+
+Node.js + Express server handles:
+- Route management
+- MySQL connection
+- Auth verification (Firebase token)
+- Data storage (sessions, scores, questions)
+- Orchestrates calls to Python ML services
+
+---
+
+### 🤖 Question Generation Service  
+Location: `QuestionGeneration/backend/app/`
+
+Responsible for generating interview questions and basic evaluation logic.
+
+Models used:
+- `google/flan-t5-small` (question & answer generation)
+- SentenceTransformers for similarity
+- DistilBERT for sentiment
+- DistilBART for feedback
+
+---
+
+### 🧠 Evaluation / ML Service  
+Location: `evaluation/ml_service`
+
+Responsible for evaluating candidate answers and audio transcription.
+
+Models used:
+- `SentenceTransformer("all-MiniLM-L6-v2")` — semantic similarity
+- Whisper (speech-to-text)
+- GROQ LLM for ideal answer generation
+
+---
+
+## 📏 Scoring Logic (0–10 Scale)
+
+Evaluation is based on three metrics:
 
 | Metric | Purpose | Weight |
 |--------|---------|--------|
-| Semantic Similarity | Meaning overlap with reference answer | 60% |
-| Keyword Coverage | Role-specific word match count | 25% |
-| Sentiment Confidence | Confidence of answer tone | 15% |
+| Semantic Similarity | Concept alignment with ideal answer | 60% |
+| Keyword Coverage | Role keyword matches | 25% |
+| Sentiment Confidence | Positive tone / clarity | 15% |
 
-Final score converted to **0–10 scale**:
+### How Final Score is Calculated
+
+1. Compute hybrid weighted score:
 
 ```python
-final_score = round(weighted_score * 10, 2)
-3. Feedback Generation
+final = 0.6 * similarity + 0.25 * coverage + 0.15 * sentiment
 
-Uses summarization models to produce:
+Convert to 0–10 scale:
 
-Strengths
+final_score = round(final * 10, 2)
 
-Weaknesses
+Example:
 
-Suggested improvements
+0.78 → 7.8 / 10
 
-📦 How It All Works
-👇 Request Flow
+Feedback is generated by summarization models based on question + answer + reference answer.
 
-1️⃣ Frontend (React)
-User selects a role and answers questions.
-
-2️⃣ Backend (Node.js)
-Handles APIs, user sessions, DB storage, and forwards evaluation requests to ML service.
-
-3️⃣ ML Service (Python FastAPI)
-Performs:
-
-Question generation
-
-Answer evaluation
-
-Scoring
-
-Audio transcription
-
-Session feedback summarization
-
-📄 API Endpoints (ML Service)
-🔹 Health Check
+📡 API Endpoints (Summary)
+Health Check
 GET /health
-🔹 Generate Questions
+Question Generation Service
 POST /questions
 
-Request
+Request:
 
 {
   "role": "java",
   "count": 5
 }
-🔹 Evaluate Answer
+Answer Evaluation (QuestionGeneration)
 POST /evaluate
 
-Request
+Request:
 
 {
   "role": "java",
-  "question": "Explain OOP concepts",
-  "answer": "OOP stands for object oriented programming..."
+  "question": "...",
+  "answer": "..."
 }
-🔹 Session Feedback
+Session Feedback
 POST /session/feedback
 
-Aggregates session responses and returns motivational summary.
+Aggregates responses and returns a summary.
 
-🔍 Audio Evaluation
+ML Evaluation Service (evaluation/ml_service)
+POST /metrics/evaluate
 
-Uses whisper for audio → text transcription.
+Request:
+
+{
+  "question": "...",
+  "answer": "..."
+}
 
 Returns:
 
-Transcribed text
+ideal answer
 
-Duration
+semantic score
 
-Words per minute
+keyword coverage
 
-Filler word count
+semantic density
 
-🔐 Authentication
+final score (0–10)
 
-Firebase Authentication
+feedback text
 
-Google OAuth
+Audio Transcription
+POST /transcribe
 
-Token based auth
+Uploads audio and returns:
 
-Secure protected routes
+transcript
 
-📊 Database Design
+word count
 
-MySQL used to store:
+WPM
 
-Users
+fillers
 
-Interview sessions
+🔧 Setup & Run
+Prerequisites
 
-Questions
+Node.js
 
-Answers
+Python 3.9+
 
-Score metrics
+MySQL
 
-Performance history
+npm / pip
 
-🧪 Local Setup
-1️⃣ Frontend
-cd client
-npm install
-npm run dev
-2️⃣ Backend
-cd server
-npm install
-npm start
-3️⃣ ML Service
-cd evaluation/ml_service
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-⚙️ Environment Setup
+1️⃣ Clone Repo
+git clone https://github.com/tamannah1234/YuvaPrep-App
+cd YuvaPrep-App
+2️⃣ Setup Environment Variables
 
-Create .env files in relevant folders:
+Create .env in:
 
-Backend .env
+Backend
 PORT=5000
 DB_HOST=...
 DB_USER=...
 DB_PASS=...
 DB_NAME=...
 JWT_SECRET=...
-ML Service .env
-GROQ_API_KEY=your_api_key_here
-🚀 Future Enhancements
+QuestionGeneration Backend
+GROQ_API_KEY=your_key_here
+ML Service
+GROQ_API_KEY=your_key_here
+3️⃣ Install & Run Frontend
+cd client
+npm install
+npm run dev
+4️⃣ Install & Run Backend
+cd server
+npm install
+npm run dev
+5️⃣ Run Question Generation Service
+cd QuestionGeneration/backend/
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+6️⃣ Run Evaluation / ML Service
+cd evaluation/ml_service/
+pip install -r requirements.txt
+uvicorn app:app --reload
+🚀 Why YuvaPrep is Valuable
 
-Coding evaluation module
+AI-driven scoring with explainability
 
-System design interview module
+Combines semantic, lexical, and sentiment analysis
 
-Adaptive difficulty levels
+Supports both text and audio responses
 
-Real-time interview simulator
+Microservice architecture
 
-Tech stack mapper based on job trends
+Real-world deployable
 
-📁 Folder Structure
-YUVA-PREP/
-├── client/                # React App
-├── server/                # Node.js API
-├── evaluation/
-│   └── ml_service/        # Python AI/ML Microservice
-├── .gitignore
-├── README.md
-📌 Why This Project Matters
+📌 Next Enhancements
 
-This platform bridges the gap between interview preparation and AI-based evaluation. With its modular design and modern tech stack, YuvaPrep is:
+Full coding challenge evaluator
 
-Scalable
+System design assessment module
 
-Explainable
+Real-time mock interviewer
 
-Research-ready
-
-Production-ready
-
-❤️ Contributors & License
-
-Built by tamannah1234
-Open-source and community-driven.
+Career tech stack mapper based on market trends
