@@ -1,62 +1,34 @@
-import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Routes, Route } from "react-router-dom";
 
 import Home from "./components/Home";
 import Login from "./pages/Login";
-import VerifyOtp from "./pages/VerifyOtp";
+import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import SessionPage from "./pages/SessionPage";
 
 import FormPage from "./pages/FormPage";
 import InterviewPage from "./pages/InterviewPage";
 import SummaryPage from "./pages/SummaryPage";
 
 function App() {
-  const [userData, setUserData] = useState({});
-  const [questions, setQuestions] = useState([]);
-  const [chat, setChat] = useState([]);
-
   return (
-    <Router>
-      <ToastContainer position="top-right" autoClose={3000} />
 
-      <Routes>
-        {/* App Routes */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/verify" element={<VerifyOtp />} />
-        <Route path="/profile" element={<Profile />} />
+    <Routes>
 
-        {/* AI Mock Interview */}
-        <Route
-          path="/form"
-          element={
-            <FormPage
-              setUserData={setUserData}
-              setQuestions={setQuestions}
-              setChat={setChat}
-            />
-          }
+      <Route path="/" element={<Home />} />
 
-        />
-        <Route
-          path="/interview"
-          element={
-            <InterviewPage
-              userData={userData}
-              questions={questions}
-              chat={chat}
-              setChat={setChat}
-            />
-          }
-        />
-        <Route path="/summary" element={<SummaryPage chat={chat} />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/profile" element={<Profile />} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </Router>
+      <Route path="/sessions" element={<SessionPage />} />
+
+      <Route path="/form" element={<FormPage />} />
+      <Route path="/interview" element={<InterviewPage />} />
+      <Route path="/summary" element={<SummaryPage />} />
+
+    </Routes>
+
   );
 }
 

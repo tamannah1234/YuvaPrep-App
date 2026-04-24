@@ -13,16 +13,17 @@ export default function InterviewPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [recording, setRecording] = useState(false);
+  const [loadingEval, setLoadingEval] = useState(false);
 
   const chatEndRef = useRef(null);
   const mediaRecorderRef = useRef(null);
 
-  // Auto-scroll
+  /* AUTO SCROLL */
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  // Load questions
+  /* LOAD QUESTIONS */
   useEffect(() => {
     if (!userData) return navigate("/form");
 
@@ -32,13 +33,15 @@ export default function InterviewPage() {
           role: userData.desired_role,
           experience: userData.experience_years,
           job_description: userData.job_description,
+          count: 10, // ✅ enforce 10 questions
         });
 
-        const fetchedQuestions = res.data.questions || [];
-        setQuestions(fetchedQuestions);
+        const fetched = (res.data.questions || []).slice(0, 10);
 
-        if (fetchedQuestions.length > 0) {
-          setChat([{ sender: "system", text: fetchedQuestions[0] }]);
+        setQuestions(fetched);
+
+        if (fetched.length > 0) {
+          setChat([{ sender: "system", text: fetched[0] }]);
         }
       } catch (err) {
         console.error(err);
@@ -49,14 +52,16 @@ export default function InterviewPage() {
     fetchQuestions();
   }, [userData, navigate]);
 
-  // -----------------------------
-  // Send text answer
-  // -----------------------------
+  /* SEND ANSWER */
   const handleSend = async () => {
-    if (!answer.trim()) return;
+    if (!answer.trim() || loadingEval) return;
 
-    const currentQuestion = questions[currentIndex] || "default question";
-    let updatedChat = [...chat, { sender: "user", text: answer }];
+    const currentQuestion = questions[currentIndex];
+    const userMsg = { sender: "user", text: answer };
+
+    setChat((prev) => [...prev, userMsg]);
+    setAnswer("");
+    setLoadingEval(true);
 
     try {
       const evalRes = await axios.post(
@@ -67,46 +72,47 @@ export default function InterviewPage() {
         }
       );
 
-      updatedChat.push({
+      const systemMsg = {
         sender: "system",
-        text: `Ideal Answer:
+        text: `💡 Ideal Answer:
 ${evalRes.data.ideal_answer}
 
-Feedback →
-Score: ${evalRes.data.scores.final_score}
-Keywords: ${evalRes.data.scores.keyword_coverage}
-Comment: ${evalRes.data.feedback}`,
-      });
+📊 Score: ${evalRes.data.scores.final_score}/10
+🧠 Keywords: ${evalRes.data.scores.keyword_coverage}
+💬 ${evalRes.data.feedback}`,
+      };
+
+      setChat((prev) => [...prev, systemMsg]);
+
+      moveNext(systemMsg);
     } catch (err) {
-      console.error("Evaluation error:", err);
-      updatedChat.push({
-        sender: "system",
-        text: "Failed to evaluate answer.",
-      });
+      setChat((prev) => [
+        ...prev,
+        { sender: "system", text: "❌ Failed to evaluate answer." },
+      ]);
+    } finally {
+      setLoadingEval(false);
     }
-
-    const nextIndex = currentIndex + 1;
-    if (nextIndex < questions.length) {
-      updatedChat.push({
-        sender: "system",
-        text: questions[nextIndex],
-      });
-      setCurrentIndex(nextIndex);
-    } else {
-      navigate("/summary", { state: { chat: updatedChat } });
-      return;
-    }
-
-    setChat(updatedChat);
-    setAnswer("");
   };
 
-  // -----------------------------
-  // Mic input (FIXED)
-  // -----------------------------
+  /* MOVE NEXT QUESTION (FIXED CENTRAL LOGIC) */
+  const moveNext = (lastMsg) => {
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex < questions.length) {
+      const nextQ = { sender: "system", text: questions[nextIndex] };
+
+      setChat((prev) => [...prev, nextQ]);
+      setCurrentIndex(nextIndex);
+    } else {
+      navigate("/summary", { state: { chat } });
+    }
+  };
+
+  /* MIC INPUT */
   const handleMic = async () => {
     if (recording) {
-      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current?.stop();
       setRecording(false);
       return;
     }
@@ -114,96 +120,103 @@ Comment: ${evalRes.data.feedback}`,
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      const mediaRecorder = new MediaRecorder(stream, {
+      const recorder = new MediaRecorder(stream, {
         mimeType: "audio/webm;codecs=opus",
       });
 
-      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorderRef.current = recorder;
       let chunks = [];
 
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.ondataavailable = (e) => chunks.push(e.data);
 
-      mediaRecorder.onstop = async () => {
-        // 🔥 stop mic immediately
-        stream.getTracks().forEach((track) => track.stop());
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
 
-        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+        const blob = new Blob(chunks, { type: "audio/webm" });
         const formData = new FormData();
-        formData.append("file", audioBlob, "recording.webm");
-
-        const currentQuestion = questions[currentIndex] || "default question";
+        formData.append("file", blob);
 
         try {
+          setLoadingEval(true);
+
           const transRes = await axios.post(
             "http://localhost:8000/transcribe",
             formData,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-              timeout: 60000, // 🔥 REQUIRED FOR WHISPER
-            }
+            { timeout: 60000 }
           );
 
           const transcript = transRes.data.transcript;
-          let updatedChat = [...chat, { sender: "user", text: transcript }];
+
+          setChat((prev) => [...prev, { sender: "user", text: transcript }]);
 
           const evalRes = await axios.post(
             "http://localhost:8000/metrics/evaluate",
             {
               answer: transcript,
-              question: currentQuestion,
+              question: questions[currentIndex],
             }
           );
 
-          updatedChat.push({
+          const systemMsg = {
             sender: "system",
-            text: `Ideal Answer:
+            text: `💡 Ideal Answer:
 ${evalRes.data.ideal_answer}
 
-Feedback →
-Score: ${evalRes.data.scores.final_score}/10
-Comment: ${evalRes.data.feedback}`,
-          });
+📊 Score: ${evalRes.data.scores.final_score}/10
+💬 ${evalRes.data.feedback}`,
+          };
 
-          const nextIndex = currentIndex + 1;
-          if (nextIndex < questions.length) {
-            updatedChat.push({
-              sender: "system",
-              text: questions[nextIndex],
-            });
-            setCurrentIndex(nextIndex);
-          } else {
-            navigate("/summary", { state: { chat: updatedChat } });
-            return;
-          }
+          setChat((prev) => [...prev, systemMsg]);
 
-          setChat(updatedChat);
+          moveNext(systemMsg);
         } catch (err) {
-          console.error("Mic processing error:", err);
-          alert("Failed to process microphone input.");
+          alert("Mic processing failed");
+        } finally {
+          setLoadingEval(false);
         }
       };
 
-      mediaRecorder.start();
+      recorder.start();
       setRecording(true);
-    } catch (err) {
-      console.error("Mic permission error:", err);
-      alert("Microphone access denied!");
+    } catch {
+      alert("Microphone permission denied");
     }
   };
 
-  // End interview
   const handleEnd = () => {
     navigate("/summary", { state: { chat } });
   };
 
-  return (
-    <div className="min-h-screen bg-[#EBD3F8] flex flex-col items-center py-6 px-4">
-      <h1 className="text-2xl font-bold text-[#4A0072] mb-6">
-        AI Mock Interview
-      </h1>
+  /* PROGRESS */
+  const progress = questions.length
+    ? ((currentIndex + 1) / questions.length) * 100
+    : 0;
 
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl flex flex-col overflow-hidden">
-        <div className="flex-1 p-6 space-y-5 bg-[#FDFBFF] overflow-y-auto max-h-[60vh]">
+  return (
+    <div className="min-h-screen bg-[#0f0718] text-white flex flex-col items-center py-6 px-4">
+
+      {/* HEADER */}
+      <div className="w-full max-w-3xl mb-4">
+        <h1 className="text-xl font-semibold">
+          AI <span className="text-[#AD49E1]">Mock Interview</span>
+        </h1>
+
+        <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-[#AD49E1] transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <p className="text-xs text-white/50 mt-1">
+          Question {currentIndex + 1} of {questions.length}
+        </p>
+      </div>
+
+      {/* CHAT */}
+      <div className="w-full max-w-3xl bg-[#0a0112]/80 border border-[#AD49E1]/20 rounded-2xl flex flex-col overflow-hidden">
+
+        <div className="flex-1 p-6 space-y-5 overflow-y-auto max-h-[60vh]">
           {chat.map((msg, idx) => (
             <div
               key={idx}
@@ -212,52 +225,61 @@ Comment: ${evalRes.data.feedback}`,
               }`}
             >
               {msg.sender === "system" ? (
-                <div className="flex items-start gap-2 max-w-lg">
-                  <Bot className="w-6 h-6 text-[#7A1CAC] mt-1" />
-                  <div className="bg-[#F3E8FF] p-3 rounded-xl shadow-md whitespace-pre-line">
+                <div className="flex gap-2 max-w-lg">
+                  <Bot className="w-5 h-5 text-[#AD49E1] mt-1" />
+                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl whitespace-pre-line text-sm">
                     {msg.text}
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start gap-2 max-w-lg">
-                  <div className="bg-[#DCFCE7] p-3 rounded-xl shadow-md">
+                <div className="flex gap-2 max-w-lg">
+                  <div className="bg-[#AD49E1]/20 border border-[#AD49E1]/30 p-3 rounded-xl text-sm">
                     {msg.text}
                   </div>
-                  <User className="w-6 h-6 text-green-600 mt-1" />
+                  <User className="w-5 h-5 text-[#AD49E1] mt-1" />
                 </div>
               )}
             </div>
           ))}
+
+          {loadingEval && (
+            <div className="text-sm text-white/50 animate-pulse">
+              🤖 Evaluating answer...
+            </div>
+          )}
+
           <div ref={chatEndRef} />
         </div>
 
-        <div className="p-4 flex items-center gap-3 border-t bg-gray-50">
+        {/* INPUT */}
+        <div className="p-4 flex gap-3 border-t border-white/10 bg-[#0a0112]">
           <input
-            type="text"
             value={answer}
+            disabled={loadingEval}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Type your answer..."
-            className="flex-1 border p-3 rounded-xl"
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#AD49E1]"
           />
+
           <button
             onClick={handleMic}
             className={`p-3 rounded-xl ${
               recording ? "bg-red-600" : "bg-[#7A1CAC]"
-            } text-white`}
+            }`}
           >
-            <Mic className="w-5 h-5" />
+            <Mic className="w-5 h-5 text-white" />
           </button>
+
           <button
             onClick={handleSend}
-            className="p-3 bg-[#4A0072] text-white rounded-xl"
+            disabled={loadingEval}
+            className="p-3 bg-[#AD49E1] rounded-xl"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-5 h-5 text-white" />
           </button>
-          <button
-            onClick={handleEnd}
-            className="p-3 bg-red-600 text-white rounded-xl"
-          >
+
+          <button onClick={handleEnd} className="p-3 bg-red-600 rounded-xl">
             End
           </button>
         </div>

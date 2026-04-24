@@ -78,7 +78,7 @@ def keyword_coverage(answer: str, ideal: str) -> float:
     }
 
     if not ideal_words:
-        return 0.0
+        return 0
 
     coverage_ratio = len(answer_words & ideal_words) / len(ideal_words)
     return round(min(coverage_ratio * 10, 10), 2)

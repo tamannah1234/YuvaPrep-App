@@ -1,11 +1,91 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Link as ScrollLink } from "react-scroll";
-import { Mic, BarChart3, Zap, BrainCircuit, BadgeCheck, CalendarClock, ChevronDown, ChevronUp } from "lucide-react";
+
+import {
+  Mic,
+  BarChart3,
+  Zap,
+  BrainCircuit,
+  BadgeCheck,
+  CalendarClock,
+  FileText,
+  TrendingUp,
+} from "lucide-react";
+
+/* ---------------- Stats ---------------- */
+
+const stats = [
+  { num: "12,000+", label: "mock interviews completed" },
+  { num: "94%", label: "users felt more confident" },
+  { num: "500+", label: "expert interviewers" },
+  { num: "50+", label: "companies represented" },
+];
+
+/* ---------------- Features ---------------- */
+
+const features = [
+  {
+    num: "01",
+    icon: <BrainCircuit className="h-5 w-5 text-[#AD49E1]" />,
+    title: "AI-driven feedback",
+    content:
+      "Get instant, intelligent analysis of your responses — covering clarity, technical depth, and communication style.",
+  },
+  {
+    num: "02",
+    icon: <BadgeCheck className="h-5 w-5 text-[#AD49E1]" />,
+    title: "Industry expert panel",
+    content:
+      "Be evaluated by experienced interviewers from top companies like Google, Microsoft, and Amazon.",
+  },
+  {
+    num: "03",
+    icon: <FileText className="h-5 w-5 text-[#AD49E1]" />,
+    title: "Resume-aware questions",
+    content:
+      "Upload your resume and our AI crafts interview questions specifically relevant to your background.",
+  },
+  {
+    num: "04",
+    icon: <CalendarClock className="h-5 w-5 text-[#AD49E1]" />,
+    title: "Flexible scheduling",
+    content:
+      "Book live mock interview slots around your calendar, or practice with the AI anytime, 24/7.",
+  },
+];
+
+/* ---------------- Testimonials ---------------- */
+
+const testimonials = [
+  {
+    initials: "RK",
+    name: "Rahul K.",
+    role: "SDE-1, Bengaluru",
+    stars: 5,
+    text:
+      "YuvaPrep's AI feedback helped me understand exactly where I was losing points. Landed my first SDE role.",
+  },
+  {
+    initials: "PS",
+    name: "Priya S.",
+    role: "Product Manager, Pune",
+    stars: 5,
+    text:
+      "The expert panel interviews felt just like the real thing.",
+  },
+  {
+    initials: "AM",
+    name: "Aryan M.",
+    role: "Data Analyst, Mumbai",
+    stars: 4,
+    text:
+      "Daily challenges kept me in practice mode.",
+  },
+];
 
 const Home = () => {
   const navigate = useNavigate();
-  const [openIndex, setOpenIndex] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -13,154 +93,158 @@ const Home = () => {
     if (storedUser) setUser(JSON.parse(storedUser));
   }, []);
 
-  const toggleAccordion = (index) => setOpenIndex(openIndex === index ? null : index);
-
   const handleStartSession = () => {
-    if (!user) {
-      navigate("/login"); // redirect if not logged in
-    } else {
-      navigate("/form"); // start session
-    }
+    navigate(user ? "/form" : "/login");
   };
 
-  const features = [
-    {
-      icon: <BrainCircuit className="h-6 w-6 text-[#AD49E1]" />,
-      title: "AI-Driven Feedback",
-      content: "Get instant and intelligent feedback on your mock interviews, improving your responses in real-time.",
-    },
-    {
-      icon: <BadgeCheck className="h-6 w-6 text-[#AD49E1]" />,
-      title: "Industry Expert Panel",
-      content: "Be evaluated by interviewers from top companies like Google, Microsoft, and Amazon.",
-    },
-    {
-      icon: <CalendarClock className="h-6 w-6 text-[#AD49E1]" />,
-      title: "Flexible Scheduling",
-      content: "Book interview slots based on your availability and convenience.",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#2E073F] to-[#AD49E1] text-white">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between px-8 py-4 bg-[#2E073F] shadow-md">
-        <div className="flex-1 text-center">
-          <Link to="/" className="text-3xl font-bold text-white">YuvaPrep</Link>
-        </div>
-        <div className="absolute right-8 flex items-center space-x-6 text-lg text-[#EBD3F8]">
-          <ScrollLink to="about" smooth duration={800} offset={-80} className="hover:text-white cursor-pointer text-xl font-medium">About</ScrollLink>
+    <div className="min-h-screen bg-[#0f0718] text-white font-sans">
+
+      {/* ---------------- Navbar ---------------- */}
+
+      <nav className="sticky top-0 z-20 flex items-center justify-between px-10 py-4 bg-[#0a010f]/90 backdrop-blur border-b border-[#AD49E1]/20">
+        <Link to="/" className="text-2xl font-medium tracking-tight">
+          Yuva<span className="text-[#AD49E1]">Prep</span>
+        </Link>
+
+        <div className="flex items-center gap-8 text-sm text-white/60">
+          <ScrollLink to="about" smooth duration={800} offset={-80} className="hover:text-white cursor-pointer transition">
+            About
+          </ScrollLink>
+
+          <ScrollLink to="features" smooth duration={800} offset={-80} className="hover:text-white cursor-pointer transition">
+            Features
+          </ScrollLink>
+
+          <button
+            onClick={() => navigate("/sessions")}
+            className="hover:text-white transition"
+          >
+            Sessions
+          </button>
 
           {user ? (
-            <Link to="/profile" className="flex items-center space-x-2 px-4 py-2 rounded-2xl bg-[#7A1CAC] text-white hover:bg-[#9A4DFF] transition">
-              <span>Profile</span>
+            <Link
+              to="/profile"
+              className="px-4 py-2 rounded-lg bg-[#7A1CAC] text-white hover:bg-[#9A4DFF] transition text-sm"
+            >
+              Profile
             </Link>
           ) : (
-            <Link to="/login" className="flex items-center space-x-2 px-4 py-2 rounded-2xl bg-[#AD49E1] text-white hover:bg-[#D68FFF] transition">
-              <span>Login</span>
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-lg bg-[#7A1CAC] text-white hover:bg-[#9A4DFF] transition text-sm"
+            >
+              Login
             </Link>
           )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center text-center h-[90vh] px-4">
-        <div className="absolute inset-0 w-full h-full bg-cover bg-center" style={{ backgroundImage: "url('/banner3.jpg')" }} />
-        <div className="absolute inset-0 bg-black opacity-60"></div>
-        <div className="relative z-10">
-          <h1 className="text-5xl font-bold mb-4 text-white">Ace Your Next Interview</h1>
-          <p className="text-lg text-[#EBD3F8] mb-6">Practice with real experts, get AI-driven feedback, and boost your confidence.</p>
+      {/* ---------------- Hero ---------------- */}
 
+      <section className="relative flex flex-col items-center justify-center text-center px-4 pt-24 pb-28 overflow-hidden">
+
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_30%,rgba(173,73,225,0.18),transparent)] pointer-events-none" />
+
+        <h1 className="text-5xl md:text-6xl font-medium leading-[1.08] tracking-tight mb-5">
+          Ace your next <br />
+          <span className="text-[#AD49E1]">technical interview</span>
+        </h1>
+
+        <p className="text-white/55 text-lg max-w-md mb-10">
+          Practice with real experts, get AI-driven feedback
+        </p>
+
+        <div className="flex items-center gap-3">
           <button
             onClick={handleStartSession}
-            className="bg-[#7A1CAC] text-white px-6 py-3 rounded-lg hover:opacity-90 transition"
+            className="bg-[#7A1CAC] text-white px-7 py-3.5 rounded-xl text-sm hover:bg-[#9A4DFF] transition"
           >
-            {user ? "Start Mock Interview" : "Login to Start"}
+            {user ? "Start mock interview" : "Get started free"}
+          </button>
+
+          <button
+            onClick={() => navigate("/sessions")}
+            className="border border-white/20 text-white/70 px-6 py-3.5 rounded-xl text-sm hover:bg-white/5 transition"
+          >
+            View past sessions
           </button>
         </div>
       </section>
 
-      {/* Product Highlights Section */}
-      <section className="py-16 px-4 bg-white text-black text-center">
-        <h2 className="text-3xl font-bold mb-10">Your Interview Prep Hub</h2>
-        <div className="grid md:grid-cols-3 gap-8">
+      {/* ---------------- Stats ---------------- */}
 
-          {/* Start Interview Session Card */}
-          <div
+      <div className="border-y border-[#AD49E1]/20 grid grid-cols-4">
+        {stats.map((s, i) => (
+          <div key={i} className="py-6 text-center">
+            <div className="text-2xl text-[#D68FFF]">{s.num}</div>
+            <div className="text-xs text-white/40">{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ---------------- Cards ---------------- */}
+
+      <section className="py-20 px-10 bg-[#f8f5fc] text-[#1a0828]">
+
+        <div className="grid md:grid-cols-3 gap-5">
+
+          {/* Start Interview */}
+
+          <Card
+            icon={<Mic />}
+            title="Start interview practice"
+            desc="Generate tailored questions"
             onClick={handleStartSession}
-            className="p-6 bg-gray-100 rounded-lg shadow hover:shadow-lg cursor-pointer transition"
-          >
-            <div className="flex justify-center mb-4">
-              <Mic className="h-12 w-12 text-[#7A1CAC]" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Start Interview Practice</h3>
-            <p className="mb-4">Generate questions based on your role, experience & resume.</p>
-            <button className="bg-[#7A1CAC] text-white px-4 py-2 rounded hover:opacity-90 transition">
-              {user ? "Start Session" : "Login to Start"}
-            </button>
-          </div>
+          />
 
-          {/* Previous Sessions */}
-          <div className="p-6 bg-gray-100 rounded-lg shadow hover:shadow-lg transition">
-            <div className="flex justify-center mb-4">
-              <BarChart3 className="h-12 w-12 text-[#7A1CAC]" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">View Previous Sessions</h3>
-            <p className="mb-4">Review your past practice interviews and track progress.</p>
-            <button onClick={() => navigate("/sessions")} className="bg-[#7A1CAC] text-white px-4 py-2 rounded hover:opacity-90 transition">View Sessions</button>
-          </div>
+          <Card
+            icon={<BarChart3 />}
+            title="View previous sessions"
+            desc="Review transcripts"
+            onClick={() => navigate("/sessions")}
+          />
 
-          {/* Daily Challenge */}
-          <div className="p-6 bg-gray-100 rounded-lg shadow hover:shadow-lg transition">
-            <div className="flex justify-center mb-4">
-              <Zap className="h-12 w-12 text-[#7A1CAC]" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Daily Challenge</h3>
-            <p className="mb-4">Answer a random interview question every day & stay sharp.</p>
-            <button onClick={() => navigate("/daily-challenge")} className="bg-[#7A1CAC] text-white px-4 py-2 rounded hover:opacity-90 transition">Try Now</button>
-          </div>
+          <Card
+            icon={<Zap />}
+            title="Daily challenge"
+            desc="Practice daily"
+            onClick={() => navigate("/daily-challenge")}
+          />
+
         </div>
+
       </section>
 
-      {/* Features Accordion */}
-      <section className="py-16 px-6 bg-[#F5EBF7] text-black">
-        <h2 className="text-3xl font-bold mb-8 text-center">Key Features</h2>
-        <div className="max-w-3xl mx-auto">
-          {features.map((item, index) => (
-            <div key={index} className="mb-4 bg-white border border-gray-200 rounded-lg shadow">
-              <button onClick={() => toggleAccordion(index)} className="w-full flex justify-between items-center px-6 py-4 text-left text-lg font-medium text-[#2E073F]">
-                <div className="flex items-center space-x-3">{item.icon}<span>{item.title}</span></div>
-                {openIndex === index ? <ChevronUp /> : <ChevronDown />}
-              </button>
-              {openIndex === index && <div className="px-6 pb-4 text-sm text-gray-600">{item.content}</div>}
-            </div>
-          ))}
-        </div>
-      </section>
+    </div>
+  );
+};
 
-      {/* About Section */}
-      <section id="about" className="relative py-20 px-6 bg-white text-black">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 text-[#2E073F]">About YuvaPrep</h2>
-          <p className="text-lg text-gray-700 leading-relaxed">
-            YuvaPrep is dedicated to helping students and professionals prepare for the most competitive
-            technical interviews. Through our <span className="font-semibold text-[#7A1CAC]">expert-led mock interviews</span>,
-            <span className="font-semibold text-[#7A1CAC]"> AI-powered feedback system</span>,
-            and <span className="font-semibold text-[#7A1CAC]">professional resume reviews</span>,
-            we bridge the gap between preparation and success.
-          </p>
-        </div>
-      </section>
+/* ---------------- Card Component ---------------- */
 
-      {/* Footer */}
-      <footer className="bg-[#2E073F] py-8 text-center text-[#EBD3F8]">
-        <div className="flex justify-center space-x-6 mb-4">
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Linkedin</a>
-          <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Twitter</a>
-          <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="hover:text-white">Instagram</a>
-        </div>
-        <p className="text-sm">&copy; {new Date().getFullYear()} YuvaPrep. All rights reserved.</p>
-      </footer>
+const Card = ({ icon, title, desc, onClick }) => {
+  return (
+    <div
+      onClick={onClick}
+      className="group bg-white rounded-2xl p-7 border border-[#e8dff4] cursor-pointer hover:border-[#AD49E1]/50 transition flex flex-col gap-3"
+    >
+      <div className="w-11 h-11 rounded-xl bg-[#f3e8fc] flex items-center justify-center">
+        {icon}
+      </div>
+
+      <h3 className="text-base font-medium">
+        {title}
+      </h3>
+
+      <p className="text-sm text-[#7a6890]">
+        {desc}
+      </p>
+
+      <button className="bg-[#7A1CAC] text-white px-4 py-2 rounded-lg">
+        Start
+      </button>
+
     </div>
   );
 };

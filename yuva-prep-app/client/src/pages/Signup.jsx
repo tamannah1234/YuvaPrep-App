@@ -1,12 +1,12 @@
-import { SignIn } from "@clerk/clerk-react";
+import { SignUp } from "@clerk/clerk-react";
 
-const Login = () => {
+const Signup = () => {
 
 return (
 
 <div className="min-h-screen flex justify-center items-center bg-[#0f0718]">
 
-<SignIn />
+<SignUp />
 
 </div>
 
@@ -14,4 +14,4 @@ return (
 
 }
 
-export default Login
+export default Signup

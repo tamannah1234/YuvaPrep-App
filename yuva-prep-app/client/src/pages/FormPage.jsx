@@ -1,4 +1,3 @@
-// src/pages/FormPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,12 +5,14 @@ import { toast } from "react-toastify";
 
 function FormPage() {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     desired_role: "",
     experience_years: "",
     experience_level: "fresher",
     job_description: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -47,82 +48,115 @@ function FormPage() {
       setLoading(false);
     }
   };
-
   return (
-    <div className="flex justify-center items-center min-h-screen bg-[#EBD3F8] p-6 animate-fadeIn">
-      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-lg transform transition-transform duration-500 hover:scale-105">
-        <h2 className="text-3xl font-bold mb-6 text-center text-[#2E073F]">Candidate Information</h2>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="min-h-screen bg-[#0f0718] text-white flex items-center justify-center px-4 relative overflow-hidden">
 
-          <select
-            name="desired_role"
-            value={formData.desired_role}
-            onChange={handleChange}
-            className="w-full border-2 border-[#7A1CAC] focus:border-[#EBD3F8] focus:ring-2 focus:ring-[#7A1CAC] rounded-lg px-4 py-2 transition-all duration-300 shadow-sm"
-            required
-          >
-            <option value="">Select Desired Role</option>
-            <option value="Full Stack Developer">Full Stack Developer</option>
-            <option value="Frontend Developer">Frontend Developer</option>
-            <option value="Backend Developer">Backend Developer</option>
-            <option value="Data Engineer">Data Engineer</option>
-            <option value="Machine Learning Engineer">Machine Learning Engineer</option>
-            <option value="DevOps Engineer">DevOps Engineer</option>
-            <option value="Business Analyst">Business Analyst</option>
-            <option value="Cloud Engineer">Cloud Engineer</option>
-            <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
-            <option value="Data Analyst">Data Analyst</option>
-            <option value="Data Scientist">Data Scientist</option>
-            <option value="Software Engineer">Software Engineer</option>
-          </select>
+      {/* Glow Background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_60%_at_50%_30%,rgba(173,73,225,0.18),transparent)] pointer-events-none" />
 
+      {/* Outer subtle gradient ring */}
+      <div className="absolute w-[500px] h-[500px] bg-[#AD49E1]/20 blur-[120px] rounded-full top-1/4 left-1/2 -translate-x-1/2" />
 
-          <input
-            type="number"
-            name="experience_years"
-            placeholder="Experience (Years)"
-            value={formData.experience_years}
-            onChange={handleChange}
-            min="0"
-            className="w-full border-2 border-[#7A1CAC] focus:border-[#EBD3F8] focus:ring-2 focus:ring-[#7A1CAC] rounded-lg px-4 py-2 transition-all duration-300 shadow-sm"
-            required
-          />
+      {/* Form Card */}
+      <div className="relative w-full max-w-lg">
 
-          <select
-            name="experience_level"
-            value={formData.experience_level}
-            onChange={handleChange}
-            className="w-full border-2 border-[#7A1CAC] focus:border-[#EBD3F8] focus:ring-2 focus:ring-[#7A1CAC] rounded-lg px-4 py-2 transition-all duration-300 shadow-sm"
-          >
-            <option value="fresher">Fresher</option>
-            <option value="junior">Junior</option>
-            <option value="mid">Mid</option>
-            <option value="senior">Senior</option>
-          </select>
+        <div className="bg-[#0a0112]/80 backdrop-blur-2xl border border-[#AD49E1]/20 rounded-3xl p-8 shadow-[0_10px_60px_rgba(0,0,0,0.6)] hover:shadow-[0_0_80px_rgba(173,73,225,0.25)] transition-all duration-500">
 
-          <textarea
-            name="job_description"
-            placeholder="Job Description / Skills"
-            value={formData.job_description}
-            onChange={handleChange}
-            rows="4"
-            className="w-full border-2 border-[#7A1CAC] focus:border-[#EBD3F8] focus:ring-2 focus:ring-[#7A1CAC] rounded-lg px-4 py-2 transition-all duration-300 shadow-sm resize-none"
-          />
+          {/* Heading */}
+          <h2 className="text-3xl font-medium text-center mb-1 tracking-tight">
+            Candidate <span className="text-[#AD49E1]">Profile</span>
+          </h2>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 rounded-lg text-white font-semibold transition-all duration-300 transform ${loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#7A1CAC] hover:bg-[#5C128C] hover:scale-105"
-              }`}
-          >
-            {loading ? "Processing..." : "Start Interview"}
-          </button>
-        </form>
+          <p className="text-center text-white/50 text-sm mb-8">
+            Start your personalized interview session
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+
+            {/* Role */}
+            <div className="flex flex-col gap-2 group">
+              <label className="text-xs text-white/40 group-focus-within:text-[#AD49E1] transition">
+                Desired Role
+              </label>
+              <select
+                name="desired_role"
+                value={formData.desired_role}
+                onChange={handleChange}
+                className="bg-white/5 border border-white/10 focus:border-[#AD49E1] focus:ring-2 focus:ring-[#AD49E1]/40 rounded-xl px-4 py-3 text-sm outline-none transition-all duration-300 hover:border-white/20"
+                required
+              >
+                <option className="text-black">Select Role</option>
+                <option style={{ color: "black" }}>Full Stack Developer </option>
+                <option style={{ color: "black" }}>Frontend Developer </option>
+                <option style={{ color: "black" }}>Backend Developer </option>
+                <option style={{ color: "black" }}>Data Scientist</option>
+                <option style={{ color: "black" }}>DevOps Engineer </option>
+              </select>
+            </div>
+
+            {/* Experience */}
+            <div className="flex flex-col gap-2 group">
+              <label className="text-xs text-white/40 group-focus-within:text-[#AD49E1] transition">
+                Experience (Years)
+              </label>
+              <input
+                type="number"
+                name="experience_years"
+                value={formData.experience_years}
+                onChange={handleChange}
+                min="0"
+                className="bg-white/5 border border-white/10 focus:border-[#AD49E1] focus:ring-2 focus:ring-[#AD49E1]/40 rounded-xl px-4 py-3 text-sm outline-none transition-all duration-300 hover:border-white/20"
+                required
+              />
+            </div>
+            {/* Level */}
+            <div className="flex flex-col gap-2 group">
+              <label className="text-xs text-white/40 group-focus-within:text-[#AD49E1] transition">
+                Experience Level
+              </label>
+
+              <select
+                name="experience_level"
+                value={formData.experience_level}
+                onChange={handleChange}
+                className="bg-white/5 text-white border border-white/10 focus:border-[#AD49E1] focus:ring-2 focus:ring-[#AD49E1]/40 rounded-xl px-4 py-3 text-sm outline-none transition-all duration-300 hover:border-white/20"
+              >
+                <option value="fresher" style={{ color: "black" }}>Fresher</option>
+                <option value="junior" style={{ color: "black" }}>Junior</option>
+                <option value="mid" style={{ color: "black" }}>Mid</option>
+                <option value="senior" style={{ color: "black" }}>Senior</option>
+              </select>
+            </div>
+
+            {/* JD*/}
+            <div className="flex flex-col gap-2 group">
+              <label className="text-xs text-white/40 group-focus-within:text-[#AD49E1] transition">
+                Skills / Description
+              </label>
+              <textarea
+                name="job_description"
+                value={formData.job_description}
+                onChange={handleChange}
+                rows="4"
+                className="bg-white/5 border border-white/10 focus:border-[#AD49E1] focus:ring-2 focus:ring-[#AD49E1]/40 rounded-xl px-4 py-3 text-sm outline-none transition-all duration-300 resize-none hover:border-white/20"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 rounded-xl text-sm font-medium transition-all duration-300 ${loading
+                ? "bg-gray-500"
+                : "bg-gradient-to-r from-[#7A1CAC] to-[#AD49E1] hover:scale-[1.02] hover:shadow-lg hover:shadow-[#AD49E1]/30"
+                }`}
+            >
+              {loading ? "Processing..." : "Start Interview"}
+            </button>
+
+          </form>
+        </div>
       </div>
     </div>
   );
 }
-
 export default FormPage;
