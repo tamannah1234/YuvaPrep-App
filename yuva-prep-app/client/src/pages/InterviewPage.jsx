@@ -1,22 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { User, Bot, Send, Mic } from "lucide-react";
 import axios from "axios";
+import { getIdealAnswer, saveIdealAnswer } from "../firebase/cacheService";
+import { getQuestionId } from "../utils/questionId";
+import { saveSession } from "../firebase/sessionService";
+import { useUser } from "@clerk/clerk-react";
 
 export default function InterviewPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { userData } = location.state || {};
+  const { user } = useUser();
 
   const [questions, setQuestions] = useState([]);
   const [chat, setChat] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
-  const [recording, setRecording] = useState(false);
   const [loadingEval, setLoadingEval] = useState(false);
 
   const chatEndRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
+  const sessionScoresRef = useRef([]);
 
   /* AUTO SCROLL */
   useEffect(() => {
@@ -33,18 +36,22 @@ export default function InterviewPage() {
           role: userData.desired_role,
           experience: userData.experience_years,
           job_description: userData.job_description,
-          count: 10, // ✅ enforce 10 questions
+          count: 10,
         });
 
-        const fetched = (res.data.questions || []).slice(0, 10);
+        const fetched = res.data.questions || [];
 
         setQuestions(fetched);
 
         if (fetched.length > 0) {
-          setChat([{ sender: "system", text: fetched[0] }]);
+          setChat([
+            {
+              sender: "system",
+              text: fetched[0].question,
+            },
+          ]);
         }
       } catch (err) {
-        console.error(err);
         navigate("/form");
       }
     };
@@ -52,18 +59,63 @@ export default function InterviewPage() {
     fetchQuestions();
   }, [userData, navigate]);
 
+  /* NEXT QUESTION */
+  const moveNext = () => {
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex < questions.length) {
+      setChat((prev) => [
+        ...prev,
+        {
+          sender: "system",
+          text: questions[nextIndex].question,
+        },
+      ]);
+      setCurrentIndex(nextIndex);
+    } else {
+      handleEnd();
+    }
+  };
+
   /* SEND ANSWER */
   const handleSend = async () => {
     if (!answer.trim() || loadingEval) return;
 
-    const currentQuestion = questions[currentIndex];
-    const userMsg = { sender: "user", text: answer };
+    const currentQObj = questions[currentIndex];
+    const currentQuestion = currentQObj.question;
+    const skill = currentQObj.skill;
 
-    setChat((prev) => [...prev, userMsg]);
+    setChat((prev) => [...prev, { sender: "user", text: answer }]);
     setAnswer("");
     setLoadingEval(true);
 
     try {
+      const questionId = getQuestionId(currentQuestion);
+
+      /* CACHE CHECK */
+      let idealAnswer = await getIdealAnswer(questionId);
+
+      if (!idealAnswer) {
+        const evalRes = await axios.post(
+          "http://localhost:8000/metrics/evaluate",
+          {
+            answer,
+            question: currentQuestion,
+          }
+        );
+
+        idealAnswer = evalRes.data.ideal_answer;
+
+        await saveIdealAnswer({
+          questionId,
+          question: currentQuestion,
+          idealAnswer,
+          model: "llama-3",
+          createdAt: new Date(),
+        });
+      }
+
+      /* FINAL EVALUATION */
       const evalRes = await axios.post(
         "http://localhost:8000/metrics/evaluate",
         {
@@ -72,119 +124,75 @@ export default function InterviewPage() {
         }
       );
 
-      const systemMsg = {
-        sender: "system",
-        text: `💡 Ideal Answer:
-${evalRes.data.ideal_answer}
+      const score = evalRes.data.scores.final_score;
 
-📊 Score: ${evalRes.data.scores.final_score}/10
-🧠 Keywords: ${evalRes.data.scores.keyword_coverage}
-💬 ${evalRes.data.feedback}`,
-      };
+      /* STORE PER QUESTION RESULT */
+      sessionScoresRef.current.push({
+        questionId,
+        question: currentQuestion,
+        skill,
+        answer,
+        score,
+        keywords: evalRes.data.scores.keyword_coverage,
+        feedback: evalRes.data.feedback,
+      });
 
-      setChat((prev) => [...prev, systemMsg]);
+      setChat((prev) => [
+        ...prev,
+        {
+          sender: "system",
+          text:
+            "Ideal Answer:\n" +
+            idealAnswer +
+            "\n\nScore: " +
+            score +
+            "/10\nKeywords: " +
+            evalRes.data.scores.keyword_coverage +
+            "\n\n" +
+            evalRes.data.feedback,
+        },
+      ]);
 
-      moveNext(systemMsg);
+      moveNext();
     } catch (err) {
       setChat((prev) => [
         ...prev,
-        { sender: "system", text: "❌ Failed to evaluate answer." },
+        { sender: "system", text: "Failed to evaluate answer." },
       ]);
     } finally {
       setLoadingEval(false);
     }
   };
 
-  /* MOVE NEXT QUESTION (FIXED CENTRAL LOGIC) */
-  const moveNext = (lastMsg) => {
-    const nextIndex = currentIndex + 1;
-
-    if (nextIndex < questions.length) {
-      const nextQ = { sender: "system", text: questions[nextIndex] };
-
-      setChat((prev) => [...prev, nextQ]);
-      setCurrentIndex(nextIndex);
-    } else {
-      navigate("/summary", { state: { chat } });
-    }
-  };
-
-  /* MIC INPUT */
-  const handleMic = async () => {
-    if (recording) {
-      mediaRecorderRef.current?.stop();
-      setRecording(false);
-      return;
-    }
-
+  /* END INTERVIEW + SAVE SESSION */
+  const handleEnd = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const total = sessionScoresRef.current.reduce(
+        (sum, q) => sum + q.score,
+        0
+      );
 
-      const recorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus",
+      const scoreAvg =
+        sessionScoresRef.current.length > 0
+          ? total / sessionScoresRef.current.length
+          : 0;
+
+      await saveSession({
+        userId: user?.id,
+        role: userData.desired_role,
+        experience: userData.experience_years,
+        scoreAvg: Number(scoreAvg.toFixed(2)),
+        questions: sessionScoresRef.current,
       });
 
-      mediaRecorderRef.current = recorder;
-      let chunks = [];
-
-      recorder.ondataavailable = (e) => chunks.push(e.data);
-
-      recorder.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
-
-        const blob = new Blob(chunks, { type: "audio/webm" });
-        const formData = new FormData();
-        formData.append("file", blob);
-
-        try {
-          setLoadingEval(true);
-
-          const transRes = await axios.post(
-            "http://localhost:8000/transcribe",
-            formData,
-            { timeout: 60000 }
-          );
-
-          const transcript = transRes.data.transcript;
-
-          setChat((prev) => [...prev, { sender: "user", text: transcript }]);
-
-          const evalRes = await axios.post(
-            "http://localhost:8000/metrics/evaluate",
-            {
-              answer: transcript,
-              question: questions[currentIndex],
-            }
-          );
-
-          const systemMsg = {
-            sender: "system",
-            text: `💡 Ideal Answer:
-${evalRes.data.ideal_answer}
-
-📊 Score: ${evalRes.data.scores.final_score}/10
-💬 ${evalRes.data.feedback}`,
-          };
-
-          setChat((prev) => [...prev, systemMsg]);
-
-          moveNext(systemMsg);
-        } catch (err) {
-          alert("Mic processing failed");
-        } finally {
-          setLoadingEval(false);
-        }
-      };
-
-      recorder.start();
-      setRecording(true);
-    } catch {
-      alert("Microphone permission denied");
+      navigate("/summary", {
+        state: { chat, sessionScores: sessionScoresRef.current },
+      });
+    } catch (err) {
+      navigate("/summary", {
+        state: { chat, sessionScores: sessionScoresRef.current },
+      });
     }
-  };
-
-  const handleEnd = () => {
-    navigate("/summary", { state: { chat } });
   };
 
   /* PROGRESS */
@@ -203,7 +211,7 @@ ${evalRes.data.ideal_answer}
 
         <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-[#AD49E1] transition-all"
+            className="h-full bg-[#AD49E1]"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -218,33 +226,16 @@ ${evalRes.data.ideal_answer}
 
         <div className="flex-1 p-6 space-y-5 overflow-y-auto max-h-[60vh]">
           {chat.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex ${
-                msg.sender === "user" ? "justify-end" : "justify-start"
-              }`}
-            >
-              {msg.sender === "system" ? (
-                <div className="flex gap-2 max-w-lg">
-                  <Bot className="w-5 h-5 text-[#AD49E1] mt-1" />
-                  <div className="bg-white/5 border border-white/10 p-3 rounded-xl whitespace-pre-line text-sm">
-                    {msg.text}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex gap-2 max-w-lg">
-                  <div className="bg-[#AD49E1]/20 border border-[#AD49E1]/30 p-3 rounded-xl text-sm">
-                    {msg.text}
-                  </div>
-                  <User className="w-5 h-5 text-[#AD49E1] mt-1" />
-                </div>
-              )}
+            <div key={idx} className="flex justify-start">
+              <div className="max-w-lg bg-white/5 border border-white/10 p-3 rounded-xl text-sm whitespace-pre-line">
+                {msg.text}
+              </div>
             </div>
           ))}
 
           {loadingEval && (
-            <div className="text-sm text-white/50 animate-pulse">
-              🤖 Evaluating answer...
+            <div className="text-sm text-white/50">
+              Evaluating answer...
             </div>
           )}
 
@@ -253,35 +244,30 @@ ${evalRes.data.ideal_answer}
 
         {/* INPUT */}
         <div className="p-4 flex gap-3 border-t border-white/10 bg-[#0a0112]">
+
           <input
             value={answer}
             disabled={loadingEval}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Type your answer..."
-            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#AD49E1]"
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none"
           />
 
           <button
-            onClick={handleMic}
-            className={`p-3 rounded-xl ${
-              recording ? "bg-red-600" : "bg-[#7A1CAC]"
-            }`}
+            onClick={handleSend}
+            className="p-3 bg-[#AD49E1] rounded-xl"
           >
-            <Mic className="w-5 h-5 text-white" />
+            SEND
           </button>
 
           <button
-            onClick={handleSend}
-            disabled={loadingEval}
-            className="p-3 bg-[#AD49E1] rounded-xl"
+            onClick={handleEnd}
+            className="p-3 bg-red-600 rounded-xl"
           >
-            <Send className="w-5 h-5 text-white" />
+            END
           </button>
 
-          <button onClick={handleEnd} className="p-3 bg-red-600 rounded-xl">
-            End
-          </button>
         </div>
       </div>
     </div>

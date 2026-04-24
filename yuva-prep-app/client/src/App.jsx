@@ -8,7 +8,7 @@ import SessionPage from "./pages/SessionPage";
 
 import FormPage from "./pages/FormPage";
 import InterviewPage from "./pages/InterviewPage";
-import SummaryPage from "./pages/SummaryPage";
+import Summary from "./pages/Summary";
 
 function App() {
   return (
@@ -25,7 +25,7 @@ function App() {
 
       <Route path="/form" element={<FormPage />} />
       <Route path="/interview" element={<InterviewPage />} />
-      <Route path="/summary" element={<SummaryPage />} />
+      <Route path="/summary" element={<Summary />} />
 
     </Routes>
 

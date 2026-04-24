@@ -18,7 +18,8 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
     "react-scroll": "^1.9.3",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
