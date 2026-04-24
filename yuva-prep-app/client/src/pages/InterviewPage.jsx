@@ -5,6 +5,7 @@ import { getIdealAnswer, saveIdealAnswer } from "../firebase/cacheService";
 import { getQuestionId } from "../utils/questionId";
 import { saveSession } from "../firebase/sessionService";
 import { useUser } from "@clerk/clerk-react";
+import { getQuestions } from "../firebase/questionService";
 
 export default function InterviewPage() {
   const navigate = useNavigate();
@@ -26,21 +27,15 @@ export default function InterviewPage() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat]);
 
-  /* LOAD QUESTIONS */
+  /* LOAD QUESTIONS FROM FIREBASE */
   useEffect(() => {
     if (!userData) return navigate("/form");
 
     const fetchQuestions = async () => {
       try {
-        const res = await axios.post("http://localhost:5000/api/questions", {
-          role: userData.desired_role,
-          experience: userData.experience_years,
-          job_description: userData.job_description,
-          count: 10,
-        });
+        const data = await getQuestions();
 
-        const fetched = res.data.questions || [];
-
+        const fetched = data.slice(0, 10);
         setQuestions(fetched);
 
         if (fetched.length > 0) {
@@ -52,6 +47,7 @@ export default function InterviewPage() {
           ]);
         }
       } catch (err) {
+        console.error(err);
         navigate("/form");
       }
     };
@@ -59,7 +55,7 @@ export default function InterviewPage() {
     fetchQuestions();
   }, [userData, navigate]);
 
-  /* NEXT QUESTION */
+  /* MOVE NEXT QUESTION */
   const moveNext = () => {
     const nextIndex = currentIndex + 1;
 
@@ -98,10 +94,7 @@ export default function InterviewPage() {
       if (!idealAnswer) {
         const evalRes = await axios.post(
           "http://localhost:8000/metrics/evaluate",
-          {
-            answer,
-            question: currentQuestion,
-          }
+          { answer, question: currentQuestion }
         );
 
         idealAnswer = evalRes.data.ideal_answer;
@@ -118,15 +111,11 @@ export default function InterviewPage() {
       /* FINAL EVALUATION */
       const evalRes = await axios.post(
         "http://localhost:8000/metrics/evaluate",
-        {
-          answer,
-          question: currentQuestion,
-        }
+        { answer, question: currentQuestion }
       );
 
       const score = evalRes.data.scores.final_score;
 
-      /* STORE PER QUESTION RESULT */
       sessionScoresRef.current.push({
         questionId,
         question: currentQuestion,
@@ -164,7 +153,7 @@ export default function InterviewPage() {
     }
   };
 
-  /* END INTERVIEW + SAVE SESSION */
+  /* END INTERVIEW */
   const handleEnd = async () => {
     try {
       const total = sessionScoresRef.current.reduce(
