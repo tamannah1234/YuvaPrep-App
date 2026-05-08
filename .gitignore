@@ -65,3 +65,8 @@ build/
 ############################
 .DS_Store
 Thumbs.db
+
+############################
+# Firebase Admin Secrets
+############################
+**/serviceAccountKey.json

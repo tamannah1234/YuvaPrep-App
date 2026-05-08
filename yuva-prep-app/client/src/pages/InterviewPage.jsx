@@ -35,7 +35,15 @@ export default function InterviewPage() {
       try {
         const data = await getQuestions();
 
-        const fetched = data.slice(0, 10);
+        // ✅ NORMALIZE QUESTIONS (FIXES ALL ERRORS)
+        const fetched = data.slice(0, 10).map((q) => ({
+          question:
+            typeof q.question === "string"
+              ? q.question
+              : q.question?.question || "",
+          skill: q.skill || "General",
+        }));
+
         setQuestions(fetched);
 
         if (fetched.length > 0) {
@@ -78,7 +86,16 @@ export default function InterviewPage() {
     if (!answer.trim() || loadingEval) return;
 
     const currentQObj = questions[currentIndex];
-    const currentQuestion = currentQObj.question;
+
+    // ✅ SAFE QUESTION
+    const currentQuestion = currentQObj?.question || "";
+
+    // ✅ HARD VALIDATION (prevents 422)
+    if (!currentQuestion || !answer) {
+      console.error("Invalid payload:", { currentQuestion, answer });
+      return;
+    }
+
     const skill = currentQObj.skill;
 
     setChat((prev) => [...prev, { sender: "user", text: answer }]);
@@ -88,13 +105,29 @@ export default function InterviewPage() {
     try {
       const questionId = getQuestionId(currentQuestion);
 
+      // DEBUG (optional)
+      console.log("SENDING:", {
+        question: currentQuestion,
+        answer: answer,
+        typeQ: typeof currentQuestion,
+        typeA: typeof answer,
+      });
+
       /* CACHE CHECK */
       let idealAnswer = await getIdealAnswer(questionId);
 
       if (!idealAnswer) {
         const evalRes = await axios.post(
           "http://localhost:8000/metrics/evaluate",
-          { answer, question: currentQuestion }
+          {
+            question: String(currentQuestion),
+            answer: String(answer),
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
         );
 
         idealAnswer = evalRes.data.ideal_answer;
@@ -111,7 +144,15 @@ export default function InterviewPage() {
       /* FINAL EVALUATION */
       const evalRes = await axios.post(
         "http://localhost:8000/metrics/evaluate",
-        { answer, question: currentQuestion }
+        {
+          question: String(currentQuestion),
+          answer: String(answer),
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       const score = evalRes.data.scores.final_score;
@@ -144,6 +185,8 @@ export default function InterviewPage() {
 
       moveNext();
     } catch (err) {
+      console.error("API ERROR:", err.response?.data || err.message);
+
       setChat((prev) => [
         ...prev,
         { sender: "system", text: "Failed to evaluate answer." },
@@ -191,8 +234,6 @@ export default function InterviewPage() {
 
   return (
     <div className="min-h-screen bg-[#0f0718] text-white flex flex-col items-center py-6 px-4">
-
-      {/* HEADER */}
       <div className="w-full max-w-3xl mb-4">
         <h1 className="text-xl font-semibold">
           AI <span className="text-[#AD49E1]">Mock Interview</span>
@@ -210,9 +251,7 @@ export default function InterviewPage() {
         </p>
       </div>
 
-      {/* CHAT */}
       <div className="w-full max-w-3xl bg-[#0a0112]/80 border border-[#AD49E1]/20 rounded-2xl flex flex-col overflow-hidden">
-
         <div className="flex-1 p-6 space-y-5 overflow-y-auto max-h-[60vh]">
           {chat.map((msg, idx) => (
             <div key={idx} className="flex justify-start">
@@ -231,9 +270,7 @@ export default function InterviewPage() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* INPUT */}
         <div className="p-4 flex gap-3 border-t border-white/10 bg-[#0a0112]">
-
           <input
             value={answer}
             disabled={loadingEval}
@@ -256,7 +293,6 @@ export default function InterviewPage() {
           >
             END
           </button>
-
         </div>
       </div>
     </div>

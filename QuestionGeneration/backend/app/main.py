@@ -4,10 +4,12 @@ from typing import List, Optional
 from transformers import pipeline
 from sentence_transformers import SentenceTransformer, util
 from starlette.middleware.cors import CORSMiddleware
+
 from .roles import ROLE_KEYWORDS
 from .scoring import coverage_score, combine
+from .firebase import db   # 🔥 NEW FIREBASE IMPORT
 
-app = FastAPI(title="AI Interview API", version="0.1")
+app = FastAPI(title="AI Interview API", version="0.2")
 
 app.add_middleware(
     CORSMiddleware,
@@ -17,16 +19,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---- Load models once ----
+# ---- ML Models ----
 qg = pipeline("text-generation", model="google/flan-t5-small", do_sample=True)
 summarizer = pipeline("text-generation", model="google/flan-t5-small", do_sample=True)
 sentiment = pipeline("sentiment-analysis")
 embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
+
 # ---------- Schemas ----------
 class QuestionReq(BaseModel):
     role: str
+    experience_level: str = "fresher"
     count: int = 5
+
 
 class EvalReq(BaseModel):
     role: str
@@ -34,18 +39,19 @@ class EvalReq(BaseModel):
     answer: str
     reference_answer: Optional[str] = None
 
+
 class FeedbackReq(BaseModel):
     role: str
     qa: List[dict]
 
 
-# ---------- Helper: Skill Extractor ----------
+# ---------- Helper ----------
 def extract_skill(question: str, role: str):
     q = question.lower()
 
     if "react" in q or "hook" in q or "useeffect" in q:
         return "React"
-    elif "javascript" in q or "event loop" in q or "promise" in q:
+    elif "javascript" in q or "promise" in q:
         return "JavaScript"
     elif "css" in q or "html" in q:
         return "Frontend"
@@ -57,43 +63,80 @@ def extract_skill(question: str, role: str):
     return role
 
 
-# ---------- Endpoints ----------
+# ---------- FIREBASE QUESTION FETCH ----------
+def fetch_questions_from_firestore(role: str, level: str, limit: int):
+
+    docs = (
+        db.collection("questions_bank")
+        .where("role", "==", role)
+        .where("experience_level", "==", level)
+        .limit(limit)
+        .stream()
+    )
+
+    questions = []
+
+    for doc in docs:
+        data = doc.to_dict()
+        questions.append({
+            "question": data.get("question"),
+            "question_id": data.get("question_id"),
+            "difficulty": data.get("difficulty"),
+            "skill": data.get("topic", role)
+        })
+
+    return questions
+
+
+# ---------- HEALTH ----------
 @app.get("/health")
 def health():
     return {"ok": True}
 
 
-# ---------- UPDATED QUESTIONS ENDPOINT ----------
+# ---------- QUESTIONS ENDPOINT (FIREBASE FIRST) ----------
 @app.post("/questions")
 def generate_questions(req: QuestionReq):
 
-    prompt = (
-        f"Generate {req.count} interview questions for a {req.role} developer. "
-        f"Each question should be clear and concise."
+    # 1️⃣ Try Firestore first
+    questions = fetch_questions_from_firestore(
+        req.role,
+        req.experience_level,
+        req.count
     )
 
-    out = qg(prompt, max_length=256, num_return_sequences=1)[0]["generated_text"]
+    # 2️⃣ If not enough questions → fallback AI
+    if len(questions) < req.count:
 
-    raw_qs = [q.strip() for q in out.split("\n") if q.strip()]
+        prompt = (
+            f"Generate {req.count} interview questions for a {req.role} developer "
+            f"with experience level {req.experience_level}."
+        )
 
-    questions = []
+        out = qg(prompt, max_length=256, num_return_sequences=1)[0]["generated_text"]
 
-    for q in raw_qs[:req.count]:
-        clean_q = q.strip(" -•0123456789.").strip()
-        if clean_q:
-            questions.append({
-                "question": clean_q,
-                "skill": extract_skill(clean_q, req.role)
-            })
+        raw_qs = [q.strip() for q in out.split("\n") if q.strip()]
+
+        for q in raw_qs:
+            clean_q = q.strip(" -•0123456789.").strip()
+            if clean_q:
+                questions.append({
+                    "question": clean_q,
+                    "skill": extract_skill(clean_q, req.role)
+                })
+
+            if len(questions) >= req.count:
+                break
 
     return {
         "role": req.role,
+        "experience_level": req.experience_level,
         "questions": questions[:req.count]
     }
 
 
 # ---------- EVALUATION ----------
-@app.post("/evaluate")
+@app.post("/metrics/evaluate")
 def evaluate(req: EvalReq):
 
     if req.reference_answer:
@@ -102,9 +145,9 @@ def evaluate(req: EvalReq):
         gen_prompt = f"Provide a strong interview answer (5-8 sentences) to: {req.question}"
         ref_text = qg(gen_prompt, max_length=192, num_return_sequences=1)[0]["generated_text"]
 
-    # semantic similarity
     a_emb = embedder.encode(req.answer, convert_to_tensor=True)
     r_emb = embedder.encode(ref_text, convert_to_tensor=True)
+
     sim = float(util.cos_sim(a_emb, r_emb).item())
     sim = max(0.0, min(1.0, (sim + 1) / 2))
 
@@ -118,10 +161,9 @@ def evaluate(req: EvalReq):
 
     feedback_input = (
         f"Question: {req.question}\n"
-        f"Candidate answer: {req.answer}\n"
+        f"Answer: {req.answer}\n"
         f"Reference: {ref_text}\n"
-        f"Scores -> similarity:{scores['similarity']}, coverage:{scores['coverage']}, sentiment:{scores['sentiment_pos']}.\n"
-        "Give 3 strengths and 3 improvements in bullet points."
+        "Give 3 strengths and 3 improvements."
     )
 
     fb = summarizer(feedback_input, max_length=120, num_return_sequences=1)[0]["generated_text"]
@@ -137,14 +179,15 @@ def evaluate(req: EvalReq):
 @app.post("/session/feedback")
 def session_feedback(req: FeedbackReq):
 
-    lines = []
-    for i, item in enumerate(req.qa, 1):
-        lines.append(
-            f"Q{i}: {item.get('q')}\nA{i}: {item.get('a')}\nScore: {item.get('score')}"
-        )
+    body = "\n\n".join([
+        f"Q: {x.get('q')}\nA: {x.get('a')}\nScore: {x.get('score')}"
+        for x in req.qa
+    ])
 
-    body = "\n\n".join(lines) + "\n\nProvide a concise, motivational summary with next steps."
-
-    summary = summarizer(body, max_length=180, num_return_sequences=1)[0]["generated_text"]
+    summary = summarizer(
+        body + "\nGive motivational feedback and improvement plan.",
+        max_length=180,
+        num_return_sequences=1
+    )[0]["generated_text"]
 
     return {"summary": summary}

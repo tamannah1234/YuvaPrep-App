@@ -13,6 +13,7 @@
     "@clerk/clerk-react": "^5.61.5",
     "axios": "^1.11.0",
     "firebase": "^12.12.0",
+    "firebase-admin": "^13.8.0",
     "lucide-react": "^0.536.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
