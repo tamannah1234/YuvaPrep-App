@@ -1,26 +1,42 @@
-# 🚀 YuvaPrep – AI-Powered Interview Preparation Platform
+# YuvaPrep – AI-Powered Interview Preparation Platform
 
 YuvaPrep is an AI-powered interview preparation platform designed to help students and job seekers improve their interview skills through intelligent evaluation and personalized feedback.
 
-The platform enables users to generate role-specific interview questions, submit text or audio responses, and receive AI-generated scores with detailed feedback using advanced NLP and transformer-based models.
+The platform enables users to generate role-specific interview questions, submit text or audio responses, and receive AI-generated scores with detailed feedback using Natural Language Processing and transformer-based machine learning models.
 
 ---
 
-# 📌 Key Features
+# Project Overview
 
-- 🎯 Role-based interview question generation  
-- 🧠 AI-driven answer evaluation and scoring  
-- 📊 Semantic similarity and keyword-based analysis  
-- 😊 Sentiment-aware response evaluation  
-- 🎤 Audio interview support with speech transcription  
-- 📈 Session-wise performance tracking and analytics  
-- 🔐 Secure authentication using Firebase Google Auth  
-- ⚡ Microservice-based scalable architecture  
-- 📄 Personalized AI-generated feedback reports  
+YuvaPrep provides an end-to-end interview preparation experience by combining full-stack web technologies with Artificial Intelligence and NLP-based evaluation systems.
+
+Users can:
+
+- Generate interview questions based on job roles
+- Submit responses through text or audio
+- Receive AI-generated evaluation scores
+- Analyze strengths and areas for improvement
+- Track interview performance across sessions
+
+The platform is designed using a scalable microservice architecture to support modular AI services and real-world deployment scenarios.
 
 ---
 
-# 🧠 Tech Stack
+# Key Features
+
+- Role-based interview question generation
+- AI-driven answer evaluation and scoring
+- Semantic similarity and keyword-based analysis
+- Sentiment-aware response evaluation
+- Audio interview support with speech transcription
+- Session-wise performance tracking and analytics
+- Secure authentication using Firebase Google Authentication
+- Scalable microservice-based architecture
+- AI-generated personalized feedback reports
+
+---
+
+# Tech Stack
 
 | Layer | Technologies |
 |------|---------------|
@@ -34,7 +50,7 @@ The platform enables users to generate role-specific interview questions, submit
 
 ---
 
-# 🏗️ System Architecture
+# System Architecture
 
 ```text
 Frontend (React.js)
@@ -52,7 +68,7 @@ Question Generation Service        Evaluation / ML Service
 
 ---
 
-# 📂 Project Structure
+# Project Structure
 
 ```bash
 YuvaPrep-App/
@@ -71,77 +87,66 @@ YuvaPrep-App/
 
 ---
 
-# 📝 Project Overview
+# Core Modules
 
-YuvaPrep provides an end-to-end interview preparation experience by combining full-stack web technologies with Artificial Intelligence and Natural Language Processing.
-
-Users can:
-
-- Generate interview questions based on job roles
-- Submit interview responses through text or audio
-- Receive AI-generated evaluation scores (0–10)
-- Analyze strengths and improvement areas
-- Track interview sessions and performance over time
-
-The platform is designed using a scalable microservice architecture to support modular AI services and real-world deployment scenarios.
-
----
-
-# ⚙️ Core Modules
-
-## 🎨 Frontend (`client/`)
+## Frontend (`client/`)
 
 Built using React.js and Tailwind CSS.
 
 ### Features
+
 - User Authentication
 - Candidate Dashboard
 - Interview Session Interface
-- AI Score & Feedback Visualization
-- Responsive UI Design
-- Protected Routes with Firebase Auth
+- AI Score and Feedback Visualization
+- Responsive User Interface
+- Protected Routes using Firebase Authentication
 
 ---
 
-## 🔐 Backend (`server/`)
+## Backend (`server/`)
 
 The Node.js backend acts as the central API gateway.
 
 ### Responsibilities
-- API Routing & Middleware Handling
+
+- API Routing and Middleware Handling
 - Firebase Token Verification
 - MySQL Database Management
-- Session & Evaluation Storage
+- Session and Evaluation Storage
 - Integration with AI/ML Services
 
 ---
 
-## 🤖 Question Generation Service
+## Question Generation Service
 
 **Location:** `QuestionGeneration/backend/app/`
 
 Responsible for generating role-specific interview questions and lightweight evaluation tasks.
 
 ### Models Used
-- `google/flan-t5-small`
+
+- google/flan-t5-small
 - SentenceTransformers
 - DistilBERT
 - DistilBART
 
 ### Capabilities
+
 - AI-based question generation
 - Basic semantic analysis
 - Feedback summarization
 
 ---
 
-## 🧠 Evaluation / ML Service
+## Evaluation / ML Service
 
 **Location:** `evaluation/ml_service/`
 
 Responsible for advanced answer evaluation and speech analysis.
 
 ### Features
+
 - Semantic similarity scoring
 - Keyword coverage analysis
 - Speech-to-text transcription
@@ -149,13 +154,14 @@ Responsible for advanced answer evaluation and speech analysis.
 - Confidence-based scoring system
 
 ### Models Used
-- `SentenceTransformer("all-MiniLM-L6-v2")`
+
+- SentenceTransformer("all-MiniLM-L6-v2")
 - OpenAI Whisper
 - GROQ LLM API
 
 ---
 
-# 📏 AI Scoring Logic
+# AI Scoring Logic
 
 Candidate responses are evaluated using a weighted hybrid scoring model.
 
@@ -183,11 +189,11 @@ final_score = round(final * 10, 2)
 0.78 → 7.8 / 10
 ```
 
-The platform also generates AI-powered feedback summaries based on the candidate response, ideal answer, and evaluation metrics.
+The platform also generates AI-powered feedback summaries based on candidate responses, ideal answers, and evaluation metrics.
 
 ---
 
-# 📡 API Endpoints
+# API Endpoints
 
 ## Health Check
 
@@ -253,7 +259,6 @@ POST /metrics/evaluate
 - Ideal Answer
 - Semantic Similarity Score
 - Keyword Coverage
-- Semantic Density
 - Final Score (0–10)
 - AI Feedback
 
@@ -274,7 +279,7 @@ POST /transcribe
 
 ---
 
-# 🔧 Installation & Setup
+# Installation and Setup
 
 ## Prerequisites
 
@@ -285,7 +290,7 @@ POST /transcribe
 
 ---
 
-## 1️⃣ Clone Repository
+## Clone Repository
 
 ```bash
 git clone https://github.com/tamannah1234/YuvaPrep-App
@@ -294,7 +299,7 @@ cd YuvaPrep-App
 
 ---
 
-## 2️⃣ Configure Environment Variables
+## Configure Environment Variables
 
 ### Backend `.env`
 
@@ -315,7 +320,7 @@ GROQ_API_KEY=your_api_key
 
 ---
 
-## 3️⃣ Run Frontend
+## Run Frontend
 
 ```bash
 cd client
@@ -325,7 +330,7 @@ npm run dev
 
 ---
 
-## 4️⃣ Run Backend
+## Run Backend
 
 ```bash
 cd server
@@ -335,7 +340,7 @@ npm run dev
 
 ---
 
-## 5️⃣ Run Question Generation Service
+## Run Question Generation Service
 
 ```bash
 cd QuestionGeneration/backend
@@ -345,7 +350,7 @@ uvicorn app.main:app --reload
 
 ---
 
-## 6️⃣ Run Evaluation Service
+## Run Evaluation Service
 
 ```bash
 cd evaluation/ml_service
@@ -355,53 +360,46 @@ uvicorn app:app --reload
 
 ---
 
-# 🚀 Why YuvaPrep?
+# Learning Outcomes
 
-YuvaPrep demonstrates practical implementation of:
+Through this project, I gained practical experience in:
 
-- Artificial Intelligence in education technology
-- NLP-based evaluation systems
+- AI-powered application development
+- Natural Language Processing
 - Transformer-based semantic analysis
 - Speech processing and transcription
 - Full-stack microservice architecture
-- Real-world scalable AI applications
-
-The project combines frontend engineering, backend APIs, database integration, and machine learning services into a deployable end-to-end platform.
-
----
-
-# 📈 Future Enhancements
-
-- 💻 Coding Interview Evaluator  
-- 🎯 Real-Time Mock Interviewer  
-- 🧩 System Design Interview Module  
-- 📊 AI Career Recommendation Engine  
-- 🌍 Multi-language Interview Support  
-- 📚 Market Trend-Based Skill Mapping  
+- REST API development
+- Authentication and database integration
+- Scalable backend system design
 
 ---
 
-# 🤝 Contributing
+# Future Enhancements
 
-Contributions are welcome.
-
-1. Fork the repository  
-2. Create a feature branch  
-3. Commit your changes  
-4. Open a Pull Request  
+- Coding interview evaluator
+- Real-time AI mock interviewer
+- System design interview module
+- AI-based career recommendation engine
+- Multi-language interview support
+- Market trend-based skill analysis
 
 ---
 
-# 📜 License
+# Contributing
+
+Contributions are welcome. Feel free to fork the repository and submit a pull request for improvements.
+
+---
+
+# License
 
 This project is licensed under the MIT License.
 
 ---
 
-# 👨‍💻 Author
+# Author
 
-**Tamanna Singh**
-
-Passionate about AI, Data Engineering, and Full Stack Development.
+Tamanna Singh
 
 GitHub: https://github.com/tamannah1234/YuvaPrep-App
